@@ -44,6 +44,10 @@
     <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>D:\SteamLibrary\steamapps\common\Kingdoms and Castles\KingdomsAndCastles_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -94,6 +98,17 @@
   <ItemGroup>
     <Compile Include="KingdomRenderer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Zat.AssetLoading.cs" />
+    <Compile Include="Zat.Debugging.cs" />
+    <Compile Include="Zat.GameUtils.cs" />
+    <Compile Include="Zat.InterModComm.cs" />
+    <Compile Include="Zat.ModMenu.API.cs" />
+    <Compile Include="Zat.Reflection.cs" />
+    <Compile Include="Zat.Rendering.cs" />
+    <Compile Include="Zat.UI.Utilities.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
