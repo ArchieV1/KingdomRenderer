@@ -51,6 +51,9 @@ namespace KingdomRenderer
         /// </summary>
         private string _savePath = "";
 
+        public GameObject cameraGameObject;
+        public Camera camera;
+
         #region Initial Start
         public void Start()
         {
@@ -59,11 +62,11 @@ namespace KingdomRenderer
             var config = new InteractiveConfiguration<KRSettings>();
             _settings = config.Settings;
             
-            //TODO Use coroutine to speed up rendering
-            // Find.CameraDriver.StartCoroutine(DoRendering(forceRenderFullMap));  // From ProgressRender
-            // GameObject cameraGameObject = new GameObject("cameraGameObject");
-            // Camera camera = cameraGameObject.AddComponent<Camera>();
-            
+            cameraGameObject = new GameObject("KRCameraGameObject");
+            camera = cameraGameObject.AddComponent<Camera>();
+            camera.enabled = false;
+            camera.CopyFrom(Camera.main);
+
             LogModSettings();
             
             helper.Log("Creating Render files. SteamApps");
@@ -208,7 +211,6 @@ namespace KingdomRenderer
         /// </summary>
         public void Update()
         {
-            //helper.Log((GameState.inst.CurrMode == GameState.inst.playingMode).ToString());
             // If enabled and not on the menu/world creation screen
             if (!_settings.RendSettings.Enabled.Value) return;
             
@@ -219,7 +221,7 @@ namespace KingdomRenderer
             {
                 helper.Log("Manual render");
                 try
-                {                  
+                {
                     SaveRender(RenderWorld(
                         int.Parse(_settings.RendSettings.ResolutionX.Options[
                             _settings.RendSettings.ResolutionX.Value]),
@@ -317,7 +319,7 @@ namespace KingdomRenderer
         /// <param name="filename">Filename not including extension or path</param>
         public void SaveRender(Texture2D texture2D, string filename)
         {
-            // This exists so that other saving methods can be easily swapped out. eg Change gif to jpeg
+            // This exists so that other saving methods can be easily swapped out at a later date. eg Change gif to jpeg
             inst.helper.Log("SaveRender Start");
             try
             {
@@ -426,47 +428,47 @@ namespace KingdomRenderer
         {
             try
             {
-                // if (Camera.main == null)
-                // {
-                //     return null;
-                // }
                 KingdomRenderer.inst.helper.Log("CaptureWorldShot Start");
-                // KingdomRenderer.inst.finishedRendering = false; //
-                // KingdomRenderer.SetCloudSettings(Settings.inst.ShowClouds); //
-                // KingdomRenderer.SetStoneUI(World.inst
-                //     .hasStoneUI); // This is a val stored in world for if stone UI or not
-                // // Remove clouds and Stone
-                // inst.DestroyStoneUIs(); //
-                // Settings.inst.ShowClouds = false; //
-                // Settings.inst.SaveSettings(); //
+                Camera camera = KingdomRenderer.inst.camera;
+                KingdomRenderer.inst.helper.Log($"Cameras: {Camera.allCamerasCount}");
 
-                bool fog = RenderSettings.fog;
-                var cameraMainTransform = Camera.main.transform;
-                Vector3 position = cameraMainTransform.position;
-                Quaternion rotation = cameraMainTransform.rotation;
-                RenderSettings.fog = false;
-                float num = (float) ((World.inst.GridHeight >= inst.GridWidth) ? inst.GridHeight : inst.GridWidth) / 2f;
-                //Camera.main.transform.position = new Vector3(-num / 2f, num, -num / 2f);
-                cameraMainTransform.position =
-                    new Vector3(inst.GridWidth / 2f, num * renderHeight, inst.GridHeight / 2f);
-                //Camera.main.transform.LookAt(new Vector3((float)inst.GridWidth * 0.33f, 0f, (float)inst.GridHeight * 0.33f));
-                cameraMainTransform.LookAt(new Vector3(inst.GridWidth / 2f, 0f, inst.GridHeight / 2f));
-                if (Camera.main.GetComponent<GlobalFog>() != null)
+                if (camera == null)
                 {
-                    Camera.main.GetComponent<GlobalFog>().enabled = false;
+                    return new Texture2D(0, 0);
+                }
+                
+                float num = (inst.GridHeight >= inst.GridWidth ? inst.GridHeight : inst.GridWidth) / 2f;
+                
+                var cameraMainTransform = camera.transform;
+                cameraMainTransform.position =  new Vector3(inst.GridWidth / 2f,
+                                                            num * renderHeight,
+                                                            inst.GridHeight / 2f);
+                cameraMainTransform.LookAt(new Vector3(inst.GridHeight / 2f, 0f, inst.GridWidth / 2f));
+                cameraMainTransform.Rotate(new Vector3(0,0,270), Space.Self);
+
+
+                if (camera.GetComponent<GlobalFog>() != null)
+                {
+                    camera.GetComponent<GlobalFog>().enabled = false;
                 }
 
-                Texture2D result = inst.Func_CaptureWorldShot(width, height);
-                if (Camera.main.GetComponent<GlobalFog>() != null)
+                RenderTexture originalRenderTexure = RenderTexture.active;
+                RenderTexture renderTexture = new RenderTexture(width, height, 32);
+                
+                RenderTexture.active = renderTexture;
+                camera.Render();
+                RenderTexture.active = originalRenderTexure;
+
+                Texture2D result = new Texture2D(width, height);
+                result.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                result.Apply();
+                
+                if (camera.GetComponent<GlobalFog>() != null)
                 {
-                    Camera.main.GetComponent<GlobalFog>().enabled = true;
+                    camera.GetComponent<GlobalFog>().enabled = true;
                 }
 
-                RenderSettings.fog = fog;
-                cameraMainTransform.position = position;
-                cameraMainTransform.rotation = rotation;
-
-                // KingdomRenderer.inst.finishedRendering = true; //
+                KingdomRenderer.inst.finishedRendering = true; //TODO why is this commented out????
                 KingdomRenderer.inst.helper.Log("CaptureWorldShot End");
                 return result;
             }
@@ -503,20 +505,20 @@ namespace KingdomRenderer
         public InteractiveToggleSetting Enabled { get; private set; }
         
         [Setting("Rending Height", "How far above the map the render is taken from")]
-        [Slider(2f, 5f, 3.5f, "3.5")]
+        [Slider(2f, 15f, 4.5f, "4.5")]
         public InteractiveSliderSetting RendHeight { get; private set; }
         
-        [Setting("Render Resolution Scaling Factor", "The scale factor of the render where 1.0 is 1920x1080\n" +
+        [Setting("Render Resolution Scaling Factor", "The scaling factor of the render where 1.0 is 1920x1080\n" +
                                                      "Larger number will impact performance while rendering but look better")]
-        [Slider(0.1f, 4f, 1f, "1")]
+        [Slider(0.1f, 16f, 1f, "1")]
         public InteractiveSliderSetting ResScaling { get; private set; }
 
         [Setting("Render Resolution X", "Larger resolutions will cause the rendering process to take longer")]
-        [Select(5,  new []{"160", "320", "480", "512", "720", "1280", "1920", "3840", "4096", "7680"})]
+        [Select(6,  new []{"160", "320", "480", "512", "720", "1280", "1920", "3840", "4096", "7680", "15360"})]
         public InteractiveSelectSetting ResolutionX { get; private set; }
         
         [Setting("Render Resolution Y", "Larger resolutions will cause the rendering process to take longer")]
-        [Select(5,  new []{"120", "240", "272", "342", "480", "960", "1080", "2160", "3072", "4320"})]
+        [Select(6,  new []{"120", "240", "272", "342", "480", "960", "1080", "2160", "3072", "4320", "8640"})]
         public InteractiveSelectSetting ResolutionY { get; private set; }
         
         [Setting("Render Filetype", "Which image type do you want images to be saved as?")]
