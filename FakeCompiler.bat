@@ -1,5 +1,5 @@
 :: Set up
-ECHO ==================Starting compiler==================
+ECHO ==================Starting "compiler"==================
 SET "kac-mod-directory=D:\SteamLibrary\steamapps\common\Kingdoms and Castles\KingdomsAndCastles_Data\mods\KingdomRenderer"
 SET "wip-mod-directory=C:\Users\green\RiderProjects\KingdomRenderer\KingdomRenderer"
 SET "kac-appdata-directory=C:\Users\green\AppData\LocalLow\LionShield\Kingdoms and Castles"

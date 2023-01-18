@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Reflection;
 using Assets;
 using UnityEngine;
@@ -9,42 +11,64 @@ using Zat.Shared.ModMenu.API;
 using Zat.Shared.ModMenu.Interactive;
 using Colour = UnityEngine.Color;
 
-
 namespace KingdomRenderer
 {
     public class KingdomRenderer : MonoBehaviour
     {
+        // USER SETTINGS
+        /* 
+         Change these values to change where images will be saved.
+         Change `SavePathAppData` to change which subfolder files saved with the settings "AppData" will be saved
+         Change `SavePathSteamApps` to change which subfolder files save with the settings "SteamApps" will be saved
+         
+         Unfortunately because of how KC works it is not possible to set other file saving destination. 
+         Only directories (Folders) below this these two
+         */
+        
+        // C:\Users\USERNAME\AppData\LocalLow\LionShield\Kingdoms and Castles\
+        private const string SavePathAppData = "/";
+
+        // ~\steamapps\common\Kingdoms and Castles\KingdomsAndCastles_Data\mods\KingdomRenderer\Renders
+        private const string SavePathSteamApps = "/Renders/";
+        
         // Instances
         public KCModHelper helper;
-        private static TimelapseGif timelapseGif = new TimelapseGif();
-        public static KingdomRenderer Inst;
+        public static KingdomRenderer inst;
         
         private string _renderWidth = "";
         private string _renderHeight = "";
-        
-        // Vars for _rendering
-        private static bool _shouldRender = false;
+        private static bool _shouldRender;
         private static bool _cloudSetting;
+        public bool finishedRendering;
 
         // Settings to be init inside Start()
-        // Ignore proxy warning. IT IS USED
-        public KingdomRendererSettings kingdomRendererSettings;
-        public ModSettingsProxy proxy;
-
-        // So that it puts the clouds+stone popups back after the render has finished
-        public bool finishedRendering = false;
+        // Ignore modSettingsProxy warning. IT IS USED
+        private KRSettings _settings;
+        public ModSettingsProxy modSettingsProxy;
+        
+        /// <summary>
+        /// Path to save files at. Contains "/Renders/"
+        /// </summary>
+        private string _savePath = "";
 
         #region Initial Start
         public void Start()
         {
             helper.Log("START");
-            Inst = this;
-            var config = new InteractiveConfiguration<KingdomRendererSettings>();
-            kingdomRendererSettings = config.Settings;
+            inst = this;
+            var config = new InteractiveConfiguration<KRSettings>();
+            _settings = config.Settings;
             
-            LogModSettings(helper);
+            //TODO Use coroutine to speed up rendering
+            // Find.CameraDriver.StartCoroutine(DoRendering(forceRenderFullMap));  // From ProgressRender
+            // GameObject cameraGameObject = new GameObject("cameraGameObject");
+            // Camera camera = cameraGameObject.AddComponent<Camera>();
             
-            // Set settings up
+            LogModSettings();
+            
+            helper.Log("Creating Render files. SteamApps");
+            helper.Log(CreateRendersDirectory(helper.modPath).ToString());
+            
             ModSettingsBootstrapper.Register(config.ModConfig, (proxy, saved) =>
             {
                 config.Install(proxy, saved);
@@ -60,48 +84,52 @@ namespace KingdomRenderer
         {
             try
             {
-                this.proxy = proxy;
+                modSettingsProxy = proxy;
                 if (!proxy) 
                 {
-                    Debugging.Log("KingdomRenderer", "Failed to register proxy");
+                    Debugging.Log("KingdomRenderer", "Failed to register modSettingsProxy");
                     return;
                 }
                 
                 // Change the text in the settings menu when the options are changed
                 // Change the update interval label to be the new value
-                kingdomRendererSettings.AutomaticRendering.RendersPerYear.OnUpdate.AddListener(
+                _settings.AutoRend.RendPer10Year.OnUpdate.AddListener(
                     (kingdomRendererSettings) =>
                     {
-                        this.kingdomRendererSettings.AutomaticRendering.RendersPerYear.Label = 
-                            this.kingdomRendererSettings.AutomaticRendering.RendersPerYear.Value.ToString();
+                        _settings.AutoRend.RendPer10Year.Label = 
+                            _settings.AutoRend.RendPer10Year.Value.ToString(CultureInfo.InstalledUICulture);
                     });
                 // Change the render height interval to be the new value
-                kingdomRendererSettings.RenderingSetting.RenderingHeight.OnUpdate.AddListener(
+                _settings.RendSettings.RendHeight.OnUpdate.AddListener(
                     (kingdomRendererSettings) =>
                     {
-                        this.kingdomRendererSettings.RenderingSetting.RenderingHeight.Label =
-                            this.kingdomRendererSettings.RenderingSetting.RenderingHeight.Value.ToString();
+                        _settings.RendSettings.RendHeight.Value =
+                            (float) Math.Round(_settings.RendSettings.RendHeight.Value, 1);
+                        _settings.RendSettings.RendHeight.Label =
+                            _settings.RendSettings.RendHeight.Value.ToString(CultureInfo.InstalledUICulture);
                     });
                 // Change the render resolution scaling label to be the new value
-                kingdomRendererSettings.RenderingSetting.ResolutionScaling.OnUpdate.AddListener(
+                _settings.RendSettings.ResScaling.OnUpdate.AddListener(
                     (kingdomRendererSettings) =>
                     {
-                        this.kingdomRendererSettings.RenderingSetting.ResolutionScaling.Label =
-                            this.kingdomRendererSettings.RenderingSetting.ResolutionScaling.Value.ToString();
+                        _settings.RendSettings.ResScaling.Value =
+                            (float) Math.Round(_settings.RendSettings.ResScaling.Value, 1);
+                        _settings.RendSettings.ResScaling.Label =
+                            _settings.RendSettings.ResScaling.Value.ToString(CultureInfo.InstalledUICulture);
                     });
 
-                // Not int so that if just maps to the same location
-                // No calulations are done here just a mapping of names
+                // Not int so that it just maps to the same location
+                // No calculations are done here just a mapping of names
                 _renderWidth =
-                    kingdomRendererSettings.RenderingSetting.ResolutionX.Options[
-                        kingdomRendererSettings.RenderingSetting.ResolutionX.Value];
-                _renderHeight = kingdomRendererSettings.RenderingSetting.ResolutionY.Options[
-                    kingdomRendererSettings.RenderingSetting.ResolutionY.Value];
+                    _settings.RendSettings.ResolutionX.Options[
+                        _settings.RendSettings.ResolutionX.Value];
+                _renderHeight = _settings.RendSettings.ResolutionY.Options[
+                    _settings.RendSettings.ResolutionY.Value];
                 
                 
                 Debugging.Log("KingdomRenderer", "Finished registering KingdomRenderer");
                 helper.Log("OnModRegistered");
-                LogModSettings(helper);
+                LogModSettings();
             }
             catch (Exception ex)
             {
@@ -116,6 +144,7 @@ namespace KingdomRenderer
         /// Sets up modHelper and patches Harmony
         /// </summary>
         /// <param name="helper">The helper injected by KaC upon compilation</param>
+        // ReSharper disable once ParameterHidesMember
         public void Preload(KCModHelper helper)
         {
             // Set up mod helper
@@ -125,18 +154,19 @@ namespace KingdomRenderer
             // Load harmony
             var harmony = HarmonyInstance.Create("KingdomRenderer");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
-            }
+        }
         
         /// <summary>
         /// Runs after the scene has loaded
         /// </summary>
         /// <param name="helper">The helper injected by KaC upon compilation</param>
+        // ReSharper disable once ParameterHidesMember
         public void SceneLoaded(KCModHelper helper)
         {
             helper.Log("Scene Loaded");
-            helper.Log("renderPerYear loaded: " + PlayerPrefs.HasKey("rendersDoneThisYear" + World.inst.name));
+            helper.Log($"renderPerYear loaded: {PlayerPrefs.HasKey($"rendersDoneThisYear {World.inst.name}")}");
 
-            LogModSettings(helper);
+            LogModSettings();
         }
 
         #endregion
@@ -144,24 +174,26 @@ namespace KingdomRenderer
         /// <summary>
         /// Logs all settings to settings menu
         /// </summary>
-        /// <param name="helper"></param>
-        public void LogModSettings(KCModHelper helper)
+        public void LogModSettings()
         {
             helper.Log("---CURRENT SETTINGS---");
             try
             {
-                helper.Log("Enabled: " + kingdomRendererSettings.RenderingSetting.Enabled.Value);
-                helper.Log("Rendering height: " + kingdomRendererSettings.RenderingSetting.RenderingHeight.Value);
-                helper.Log("Rendering res X: " + _renderWidth);
-                helper.Log("Rendering res Y: " + _renderHeight + "\n");
-                
-                helper.Log("Auto enabled: " + kingdomRendererSettings.AutomaticRendering.AutomaticEnabled.Value);
-                helper.Log("Auto interval: " + kingdomRendererSettings.AutomaticRendering.RendersPerYear.Value + "\n");
-                
-                helper.Log("Manual enabled: " + kingdomRendererSettings.ManualRendering.ManualEnabled.Value);
-                helper.Log("Manual key:" + kingdomRendererSettings.ManualRendering.RenderKey.Key);
+                helper.Log($"Enabled: {_settings.RendSettings.Enabled.Value}");
+                helper.Log($"Rendering height: {_settings.RendSettings.RendHeight.Value}");
+                helper.Log($"Rendering res X: {_renderWidth}");
+                helper.Log($"Rendering res Y: {_renderHeight}");
+                helper.Log("");
+                helper.Log($"Auto enabled: {_settings.AutoRend.Enabled.Value}");
+                helper.Log($"Auto interval (Per 10 years): {_settings.AutoRend.RendPer10Year.Value}");
+                helper.Log("");
+                helper.Log($"Manual enabled: {_settings.ManRend.Enabled.Value}");
+                helper.Log($"Manual key: {_settings.ManRend.RenderKey.Key}");
+                helper.Log("");
+                helper.Log($"Filetype val: {_settings.RendSettings.FileType.Options[_settings.RendSettings.FileType.Value]}");
+                helper.Log($"Filetype: {GetFileExtension()}");
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 helper.Log("Settings not yet loaded");
             }
@@ -176,107 +208,84 @@ namespace KingdomRenderer
         /// </summary>
         public void Update()
         {
-            //helper.Log((GameState.Inst.CurrMode == GameState.Inst.playingMode).ToString());
+            //helper.Log((GameState.inst.CurrMode == GameState.inst.playingMode).ToString());
             // If enabled and not on the menu/world creation screen
-            if (kingdomRendererSettings.RenderingSetting.Enabled.Value)
+            if (!_settings.RendSettings.Enabled.Value) return;
+            
+            // Manual _rendering
+            if (Input.GetKeyDown(_settings.ManRend.RenderKey.Key)
+                && _settings.ManRend.Enabled.Value
+                && GameState.inst.CurrMode == GameState.inst.playingMode)
             {
-                // Manual _rendering
-                if (Input.GetKeyDown(kingdomRendererSettings.ManualRendering.RenderKey.Key)
-                    && kingdomRendererSettings.ManualRendering.ManualEnabled.Value
-                    && GameState.inst.CurrMode == GameState.inst.playingMode)
-                {
-                    helper.Log("Manual render");
-                    try
-                    {
-                        LogModSettings(helper);
-                        
-                        SaveRender(RenderWorld(
-                            int.Parse(kingdomRendererSettings.RenderingSetting.ResolutionX.Options[
-                                kingdomRendererSettings.RenderingSetting.ResolutionX.Value]),
-                            int.Parse(kingdomRendererSettings.RenderingSetting.ResolutionY.Options[
-                                kingdomRendererSettings.RenderingSetting.ResolutionY.Value]),
-                            kingdomRendererSettings.RenderingSetting.RenderingHeight.Value), CreateSaveName(true));
-                    }
-                    catch (Exception e)
-                    {
-                        helper.Log(e.ToString());
-                    }
+                helper.Log("Manual render");
+                try
+                {                  
+                    SaveRender(RenderWorld(
+                        int.Parse(_settings.RendSettings.ResolutionX.Options[
+                            _settings.RendSettings.ResolutionX.Value]),
+                        int.Parse(_settings.RendSettings.ResolutionY.Options[
+                            _settings.RendSettings.ResolutionY.Value]),
+                        _settings.RendSettings.RendHeight.Value), CreateSaveName(true));
                 }
-
-                // If Auto Enabled and in game (not menu)
-                if (kingdomRendererSettings.AutomaticRendering.AutomaticEnabled.Value
-                    && GameState.inst.CurrMode == GameState.inst.playingMode)
+                catch (Exception e)
                 {
-                    // if (!_rendering && AlmostEqual(Weather.Inst.GetYearProgress(),
-                    //         rendersDoneThisYear / kingdomRendererSettings.AutomaticRendering.RendersPerYear.Value,
-                    //         0.0001f))
-                    // {
-                    //     // Tell it to render the pic next "update" so that way the clouds disappear for one update cycle to take the render
-                    //     _cloudSetting = Settings.Inst.ShowClouds;
-                    //     Settings.Inst.ShowClouds = false;
-                    //     _shouldRender = true;
-                    // }
-                    
-                    // If all _rendering is done then re enable clouds and stoneUI
-                    if (finishedRendering)
-                    {
-                        helper.Log("Finished _rendering");
-                        _shouldRender = false;
-                        World.inst.GenerateStoneUIs();
-                        Settings.inst.ShowClouds = _cloudSetting;
-                        Settings.inst.SaveSettings();
-                    }
-                    
-                    if (_shouldRender)
-                    {
-                        _shouldRender = false;
-                        helper.Log("Rendering picture at time " + Weather.inst.GetYearProgress() + " in year: " + Player.inst.CurrYear);
-                        helper.Log("Rendering NOW");
-                        // SaveRender(RenderWorld(
-                        //     int.Parse(kingdomRendererSettings.RenderingSetting.ResolutionX.Options[kingdomRendererSettings.RenderingSetting.ResolutionX.Value]),
-                        //     int.Parse(kingdomRendererSettings.RenderingSetting.ResolutionY.Options[kingdomRendererSettings.RenderingSetting.ResolutionY.Value]),
-                        //     kingdomRendererSettings.RenderingSetting.RenderingHeight.Value), CreateSaveName());
-                        SaveRender(RenderWorld(500, 500, 5f), CreateSaveName());
-                        helper.Log("RENDING DONE");
-                        helper.Log("Render should be saved as:\n" +
-                                   CreateSaveName() + ".gif");
-                        //IncreaseRenderPerYear();
-                        
-                        
-                        // Re enable the clouds
-                        Settings.inst.ShowClouds = _cloudSetting;
-                    }
-                    // At end of year. Reset rendersPerYear number
-                    // May be changed to a harmony postfix to Player.OnNewYear in future
-                    // if (AlmostEqual(GetRendersPerYear(), kingdomRendererSettings.AutomaticRendering.RendersPerYear.Value)
-                    //     || GetRendersPerYear() > kingdomRendererSettings.AutomaticRendering.RendersPerYear.Value)
-                    // {
-                    //     ResetRendersPerYear();
-                    // }
-                    
-                    
-                    // Example would be:
-                    // 0.8 % (1/20) = 0.8 % (0.05) = 16 = true
-                    // With wiggle room for loss of precision because of floats
-                    if (!_shouldRender &&
-                        IsFactorFloat(Weather.inst.GetYearProgress(),
-                        1 / kingdomRendererSettings.AutomaticRendering.RendersPerYear.Value))
-                    {
-                        helper.Log("Should render NEXT frame");
-                        //Tell it to render the pic next "update" so that way the clouds disappear for one update cycle to take the render
-                        _cloudSetting = Settings.inst.ShowClouds;
-                        Settings.inst.ShowClouds = false;
-                        Settings.inst.SaveSettings();
-                        _shouldRender = true;
-                    }
+                    helper.Log(e.ToString());
                 }
             }
+
+            // If Auto Enabled and in game (not menu)
+            if (!_settings.AutoRend.Enabled.Value ||
+                GameState.inst.CurrMode != GameState.inst.playingMode) return;
+            
+            // If all _rendering is done then re enable clouds and stoneUI
+            if (finishedRendering)
+            {
+                helper.Log("Finished _rendering");
+                _shouldRender = false;
+                World.inst.GenerateStoneUIs();
+                Settings.inst.ShowClouds = _cloudSetting;
+                Settings.inst.SaveSettings();
+            }
+                    
+            if (_shouldRender)
+            {
+                _shouldRender = false;
+                helper.Log($"Rendering picture at time {Weather.inst.GetYearProgress()} in year: {Player.inst.CurrYear}");
+                helper.Log("----Rendering NOW----");
+                        
+                SaveRender(RenderWorld(int.Parse(_settings.RendSettings.ResolutionX.Options[
+                        _settings.RendSettings.ResolutionX.Value]),
+                    int.Parse(_settings.RendSettings.ResolutionY.Options[
+                        _settings.RendSettings.ResolutionY.Value]),
+                    _settings.RendSettings.RendHeight.Value), CreateSaveName());
+                helper.Log("----RENDERING DONE----");
+                helper.Log($"Render should be saved as:\n" +
+                           $"{CreateSaveName()}.{GetFileExtension()}\n" +
+                           $"at" +
+                           $"\n{_savePath}");
+                        
+                // Re enable the clouds
+                Settings.inst.ShowClouds = _cloudSetting;
+            }
+            
+            // Example would be:
+            // 0.8 % (1/20) = 0.8 % (0.05) = 16 = true
+            // With wiggle room for loss of precision because of floats
+            if (_shouldRender || !IsFactorFloat(Weather.inst.GetYearProgress(),
+                1 / (_settings.AutoRend.RendPer10Year.Value / 10))) return;
+            
+            helper.Log("Should render NEXT frame");
+            //Tell it to render the pic next "update" so that way the clouds disappear for one update cycle to take the render
+            _cloudSetting = Settings.inst.ShowClouds;
+            Settings.inst.ShowClouds = false;
+            Settings.inst.SaveSettings();
+            _shouldRender = true;
         }
         
         private int GetWhichRenderThisYear()
         {
             return (int) Math.Round(Weather.inst.GetYearProgress() /
-                              (1 / kingdomRendererSettings.AutomaticRendering.RendersPerYear.Value));
+                              (1 / (_settings.AutoRend.RendPer10Year.Value / 10)));
         }
 
         private static bool IsFactorFloat(float large, float small)
@@ -291,12 +300,12 @@ namespace KingdomRenderer
         /// </summary>
         /// <param name="width">Width of the Texture2D to be returned</param>
         /// <param name="height">Height of the Texture2D to be returned</param>
-        /// <param name="renderHeight_local">How far above the map to take the render from</param>
+        /// <param name="renderHeightLocal">How far above the map to take the render from</param>
         /// <returns>Render of the entire world</returns>
-        public Texture2D RenderWorld(int width, int height, float renderHeight_local)
+        private Texture2D RenderWorld(int width, int height, float renderHeightLocal)
         {
             helper.Log("RenderWorld Start");
-            Texture2D result = WorldExtender.KingdomRenderer_CaptureWorldShot(width, height, renderHeight_local);
+            Texture2D result = WorldExtender.KingdomRenderer_CaptureWorldShot(width, height, renderHeightLocal);
             helper.Log("RenderWorld End");
             return result;
         }
@@ -305,72 +314,32 @@ namespace KingdomRenderer
         /// Saves a texture2D
         /// </summary>
         /// <param name="texture2D">The texture to be saved</param>
-        /// <param name="filename">Filename not including extension</param>
+        /// <param name="filename">Filename not including extension or path</param>
         public void SaveRender(Texture2D texture2D, string filename)
         {
             // This exists so that other saving methods can be easily swapped out. eg Change gif to jpeg
-            Inst.helper.Log("SaveRender Start");
+            inst.helper.Log("SaveRender Start");
             try
             {
-                SaveRenderAsGif(texture2D, filename);
+                if (_settings.RendSettings.FileType.Value == 0 ||
+                    _settings.RendSettings.FileType.Value == 1) // png (SteamApps) || png (AppData)
+                {
+                    UpdateSavePath();
+                    
+                    string path = CreatePath(filename) + ".png";
+                    helper.Log($"Saving as .png to: {path}");
+                    
+                    World.inst.SaveTexture(path, texture2D);
+                }
             }
             catch (Exception e)
             {
                 helper.Log(e.ToString());
             }
 
-            Inst.helper.Log("SaveRender End");
+            inst.helper.Log("SaveRender End");
         }
         
-        /// <summary>
-        /// Saves a gif of the given texture
-        /// </summary>
-        /// <param name="texture2D">The texture to be converted to a gif</param>
-        /// <param name="filename">Filename not including extension</param>
-        public void SaveRenderAsGif(Texture2D texture2D, string filename)
-        {
-            try
-            {
-                KingdomRenderer.Inst.helper.Log("SaveRenderAsGif Start");
-                // Full path will be: C:\Users\USER\AppData\LocalLow\LionShield\Kingdoms and Castles\Renders
-                // USER MUST CREATE RENDERS FILE
-                timelapseGif.gifPath = "/Renders/" + filename + ".gif";
-                helper.Log("Saving image to: " + timelapseGif.gifPath);
-                //timelapseGif.gifPath = "/Renders/" + "test.gif";
-                timelapseGif.Create(0);
-  
-                // Converts texture2D to imagedata
-                ImageData imageData = new ImageData();
-
-                imageData.width = texture2D.width;
-                imageData.height = texture2D.height;
-                imageData.pixelData = new byte[3 * imageData.width * imageData.height];
-                int num3 = 0;
-                for (int i = imageData.height - 1; i >= 0; i--)
-                {
-                    for (int j = 0; j < imageData.width; j++)
-                    {
-                        Colour pixel = texture2D.GetPixel(j, i);
-                        imageData.pixelData[num3] = (byte) (pixel.r * 255f);
-                        num3++;
-                        imageData.pixelData[num3] = (byte) (pixel.g * 255f);
-                        num3++;
-                        imageData.pixelData[num3] = (byte) (pixel.b * 255f);
-                        num3++;
-                    }
-                }
-
-                //Add frame to gif and save gid
-                timelapseGif.AddFrame(imageData);
-                timelapseGif.CloseGif();
-                KingdomRenderer.Inst.helper.Log("SaveRenderAsGif End");
-            }
-            catch (Exception e)
-            {
-                helper.Log(e.ToString());
-            }
-        }
-
         private string CreateSaveName(bool manual = false)
         {
             if (manual)
@@ -390,6 +359,61 @@ namespace KingdomRenderer
                     GetWhichRenderThisYear().ToString(),
                     DateTime.Now.Second.ToString() // This is just in case. Don't think it's needed
                 });}
+
+        private string CreatePath(string savename)
+        {
+            return _savePath + savename;
+        }
+
+        private string GetFileExtension()
+        {
+            return _settings.RendSettings.FileType.Options
+                [_settings.RendSettings.FileType.Value].Split('(')[0].Trim();
+        }
+        
+        /// <summary>
+        /// Updates _savePath to make sure it is correct
+        /// </summary>
+        private void UpdateSavePath()
+        {
+            helper.Log("Updating save path...");
+            string savePlace = _settings.RendSettings.FileType.Options
+                    [_settings.RendSettings.FileType.Value]
+                .Split('(')[1].Trim(')'); // Get the bit in brackets eg AppData
+            if (savePlace.Equals("AppData"))
+            {
+                // C:\Users\USERNAME\AppData\LocalLow\LionShield\Kingdoms and Castles\
+                _savePath = Application.persistentDataPath + SavePathAppData;
+            }
+            else
+            {
+                // ~\steamapps\common\Kingdoms and Castles\KingdomsAndCastles_Data\mods\KingdomRenderer\Renders
+                _savePath = helper.modPath + SavePathSteamApps; 
+            }
+        }
+        
+        /// <summary>
+        /// Attempt to create a "Renders" directory at the specified path
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        private bool CreateRendersDirectory(string path)
+        {
+            try
+            {
+                string command = $"cd {path} & mkdir Renders";
+                System.Diagnostics.Process.Start("CMD.exe", $"/C {command}"); // /C hide cmd, /K show
+                _savePath = path + "/Renders/";
+                helper.Log($"Directory (now if it didn't before) exists at: {_savePath}");
+                helper.Log($"Command used: {command}");
+                return true;
+            }
+            catch (Exception e)
+            {
+                helper.Log(e.ToString());
+                return false;
+            }
+        }
     }
 
     public class WorldExtender : World
@@ -397,6 +421,7 @@ namespace KingdomRenderer
         // Most code copied from World.CaptureWorldShot() then tweaked in order to
         // Remove cloud and change camera angle to be more above the map
         // Original code is commented out with new code below
+        // Renamed to: "Func_CaptureWorldShot"
         public static Texture2D KingdomRenderer_CaptureWorldShot(int width, int height, float renderHeight)
         {
             try
@@ -405,15 +430,15 @@ namespace KingdomRenderer
                 // {
                 //     return null;
                 // }
-                KingdomRenderer.Inst.helper.Log("CaptureWorldShot Start");
-                // KingdomRenderer.Inst.finishedRendering = false; //
-                // KingdomRenderer.SetCloudSettings(Settings.Inst.ShowClouds); //
-                // KingdomRenderer.SetStoneUI(World.Inst
+                KingdomRenderer.inst.helper.Log("CaptureWorldShot Start");
+                // KingdomRenderer.inst.finishedRendering = false; //
+                // KingdomRenderer.SetCloudSettings(Settings.inst.ShowClouds); //
+                // KingdomRenderer.SetStoneUI(World.inst
                 //     .hasStoneUI); // This is a val stored in world for if stone UI or not
                 // // Remove clouds and Stone
-                // Inst.DestroyStoneUIs(); //
-                // Settings.Inst.ShowClouds = false; //
-                // Settings.Inst.SaveSettings(); //
+                // inst.DestroyStoneUIs(); //
+                // Settings.inst.ShowClouds = false; //
+                // Settings.inst.SaveSettings(); //
 
                 bool fog = RenderSettings.fog;
                 var cameraMainTransform = Camera.main.transform;
@@ -424,14 +449,14 @@ namespace KingdomRenderer
                 //Camera.main.transform.position = new Vector3(-num / 2f, num, -num / 2f);
                 cameraMainTransform.position =
                     new Vector3(inst.GridWidth / 2f, num * renderHeight, inst.GridHeight / 2f);
-                //Camera.main.transform.LookAt(new Vector3((float)Inst.GridWidth * 0.33f, 0f, (float)Inst.GridHeight * 0.33f));
+                //Camera.main.transform.LookAt(new Vector3((float)inst.GridWidth * 0.33f, 0f, (float)inst.GridHeight * 0.33f));
                 cameraMainTransform.LookAt(new Vector3(inst.GridWidth / 2f, 0f, inst.GridHeight / 2f));
                 if (Camera.main.GetComponent<GlobalFog>() != null)
                 {
                     Camera.main.GetComponent<GlobalFog>().enabled = false;
                 }
 
-                Texture2D result = inst.CaptureCameraShot(width, height);
+                Texture2D result = inst.Func_CaptureWorldShot(width, height);
                 if (Camera.main.GetComponent<GlobalFog>() != null)
                 {
                     Camera.main.GetComponent<GlobalFog>().enabled = true;
@@ -441,32 +466,36 @@ namespace KingdomRenderer
                 cameraMainTransform.position = position;
                 cameraMainTransform.rotation = rotation;
 
-                // KingdomRenderer.Inst.finishedRendering = true; //
-                KingdomRenderer.Inst.helper.Log("CaptureWorldShot End");
+                // KingdomRenderer.inst.finishedRendering = true; //
+                KingdomRenderer.inst.helper.Log("CaptureWorldShot End");
                 return result;
             }
             catch (Exception e)
             {
-                KingdomRenderer.Inst.helper.Log(e.ToString());
+                KingdomRenderer.inst.helper.Log(e.ToString());
                 return new Texture2D(width, height);
             }
         }
     }
     
+    
     #region ModSettings
-    [Mod("KingdomRenderer", "v1.0", "ArchieV / greenking2000")]
-    public class KingdomRendererSettings
+    [Mod("KingdomRenderer", "v1.2", "ArchieV / greenking2000")]
+    [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]
+    public class KRSettings
     {
         [Category("Render Settings")]
-        public RenderingSetting RenderingSetting { get; private set; }
+        public RenderingSetting RendSettings { get; private set; }
 
         [Category("Automatic Rendering")]
-        public AutomaticRendering AutomaticRendering { get; private set; }
+        public AutomaticRendering AutoRend { get; private set; }
         
         [Category("Manual Rendering")]
-        public ManualRendering ManualRendering { get; private set; }
+        public ManualRendering ManRend { get; private set; }
     }
 
+    [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
     public class RenderingSetting
     {
         [Setting("Enabled", "Whether or not to enable rendering")]
@@ -474,42 +503,52 @@ namespace KingdomRenderer
         public InteractiveToggleSetting Enabled { get; private set; }
         
         [Setting("Rending Height", "How far above the map the render is taken from")]
-        [Slider(2f, 5f, 3.5f, "3.5", false)]
-        public InteractiveSliderSetting RenderingHeight { get; private set; }
+        [Slider(2f, 5f, 3.5f, "3.5")]
+        public InteractiveSliderSetting RendHeight { get; private set; }
         
         [Setting("Render Resolution Scaling Factor", "The scale factor of the render where 1.0 is 1920x1080\n" +
                                                      "Larger number will impact performance while rendering but look better")]
-        [Slider(0.1f, 4f, 1f, "1", false)]
-        public InteractiveSliderSetting ResolutionScaling { get; private set; }
+        [Slider(0.1f, 4f, 1f, "1")]
+        public InteractiveSliderSetting ResScaling { get; private set; }
 
         [Setting("Render Resolution X", "Larger resolutions will cause the rendering process to take longer")]
-        [Select(720,  new []{"160", "320", "480", "512", "720", "1280", "1920", "3840", "4096", "7680"})]
+        [Select(5,  new []{"160", "320", "480", "512", "720", "1280", "1920", "3840", "4096", "7680"})]
         public InteractiveSelectSetting ResolutionX { get; private set; }
         
         [Setting("Render Resolution Y", "Larger resolutions will cause the rendering process to take longer")]
-        [Select(720,  new []{"120", "240", "272", "342", "480", "960", "1080", "2160", "3072", "4320 "})]
+        [Select(5,  new []{"120", "240", "272", "342", "480", "960", "1080", "2160", "3072", "4320"})]
         public InteractiveSelectSetting ResolutionY { get; private set; }
+        
+        [Setting("Render Filetype", "Which image type do you want images to be saved as?")]
+        [Select(0,  new []{"png (SteamApps)", "png (AppData)"})]
+        public InteractiveSelectSetting FileType { get; private set; }
     }
+    
+    [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
     public class ManualRendering
     {
         [Setting("Manual Rending Enabled", "Whether or not to enable manual rendering (Requires rendering to be enabled)")]
         [Toggle(true, "Enabled")]
-        public InteractiveToggleSetting ManualEnabled { get; private set; }
+        public InteractiveToggleSetting Enabled { get; private set; }
         
         [Setting("Manual Render Hotkey", "Which button to press to manually render the map")]
         [Hotkey(KeyCode.N)]
         public InteractiveHotkeySetting RenderKey { get; private set; }
     }
 
+    [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
     public class AutomaticRendering
     {
         [Setting("Automatic Rending Enabled", "Whether or not to enable automatic rendering (Requires rendering to be enabled)")]
         [Toggle(true, "Enabled")]
-        public InteractiveToggleSetting AutomaticEnabled { get; private set; }
+        public InteractiveToggleSetting Enabled { get; private set; }
         
         [Setting("Number of renders per 10 years", "Number of renderings per 10 in-game year")]
-        [Slider(1, 100, 30, "30", true)]
-        public InteractiveSliderSetting RendersPerYear { get; private set; }
+        [Slider(1, 150, 30, "30", true)]
+        public InteractiveSliderSetting RendPer10Year { get; private set; }
+        
     }
     #endregion
 }

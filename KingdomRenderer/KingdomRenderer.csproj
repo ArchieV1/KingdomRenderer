@@ -79,6 +79,9 @@
     <Reference Include="UnityEngine.IMGUIModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>D:\SteamLibrary\steamapps\common\Kingdoms and Castles\KingdomsAndCastles_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>D:\SteamLibrary\steamapps\common\Kingdoms and Castles\KingdomsAndCastles_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.InputModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>D:\SteamLibrary\steamapps\common\Kingdoms and Castles\KingdomsAndCastles_Data\Managed\UnityEngine.InputModule.dll</HintPath>
     </Reference>
@@ -112,6 +115,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="old code.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Renders" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
