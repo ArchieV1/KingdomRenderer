@@ -376,7 +376,6 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
                     return p;
                 });
             
-            ULogger.ULog($"Combining '{string.Join("','", formattedParts)}'", "System.IO.Path");
             return string.Join(separator, formattedParts);
         }
     }
