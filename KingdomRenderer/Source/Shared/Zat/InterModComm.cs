@@ -1,14 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Events;
-using Newtonsoft.Json;
 
 /// <summary>
 /// Provides functionality for communication between mods.
 /// </summary>
-namespace Zat.Shared.InterModComm
+namespace KingdomRenderer.Shared.Zat
 {
     /// <summary>
     /// MonoBehaviour that receives messages and allows to send messages to other instances yourself.

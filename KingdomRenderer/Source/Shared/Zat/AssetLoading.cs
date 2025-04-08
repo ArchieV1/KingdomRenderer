@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Zat.Shared.AssetLoading
+namespace KingdomRenderer.Shared.Zat
 {
     /// <summary>
     /// A simple wrapper that caches assets

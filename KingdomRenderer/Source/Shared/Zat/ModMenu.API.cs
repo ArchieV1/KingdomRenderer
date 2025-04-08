@@ -1,13 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
-using Zat.Shared.InterModComm;
-using System.Reflection;
-using Zat.Shared.ModMenu.API;
 
-namespace Zat.Shared.ModMenu.API
+namespace KingdomRenderer.Shared.Zat
 {
     /// <summary>
     /// Invoked when a SettingsEntry was changed
@@ -144,7 +142,7 @@ namespace Zat.Shared.ModMenu.API
         /// </summary>
         public IMCPort port;
         /// <summary>
-        /// ModConfig associated with this proxy, mirrors the state of the config in the central ModMenu
+        /// ModConfig associated with this modSettingsProxy, mirrors the state of the config in the central ModMenu
         /// </summary>
         public ModConfig Config;
         private readonly Dictionary<string, SettingsChangedEvent> settingsEvents = new Dictionary<string, SettingsChangedEvent>();
@@ -747,9 +745,6 @@ namespace Zat.Shared.ModMenu.API
     }
     #endregion
 
-}
-namespace Zat.Shared.ModMenu.Interactive
-{
     [AttributeUsage(AttributeTargets.Class)]
     public class ModAttribute : Attribute
     {
@@ -925,7 +920,7 @@ namespace Zat.Shared.ModMenu.Interactive
         public InteractiveSliderSetting(SettingsEntry entry, SliderAttribute values) : base(entry)
         {
             defaultValues = values;
-            entry.slider = new API.Slider()
+            entry.slider = new Slider()
             {
                 max = values.Max,
                 min = values.Min,
@@ -949,7 +944,7 @@ namespace Zat.Shared.ModMenu.Interactive
 
         public override void Reset()
         {
-            var slider = new API.Slider()
+            var slider = new Slider()
             {
                 max = defaultValues.Max,
                 min = defaultValues.Min,
@@ -1001,7 +996,7 @@ namespace Zat.Shared.ModMenu.Interactive
         {
             defaultValues = values;
             entry.type = EntryType.Toggle;
-            entry.toggle = new API.Toggle()
+            entry.toggle = new Toggle()
             {
                 value = values.Value,
                 label = values.Label
@@ -1023,7 +1018,7 @@ namespace Zat.Shared.ModMenu.Interactive
 
         public override void Reset()
         {
-            var toggle = new API.Toggle()
+            var toggle = new Toggle()
             {
                 value = defaultValues.Value,
                 label = defaultValues.Label
@@ -1124,7 +1119,7 @@ namespace Zat.Shared.ModMenu.Interactive
     }
     public class InteractiveColorSetting : InteractiveSetting
     {
-        public API.Color Color
+        public Color Color
         {
             get { return Setting.color; }
             set
@@ -1139,7 +1134,7 @@ namespace Zat.Shared.ModMenu.Interactive
         {
             defaultValues = values;
             entry.type = EntryType.Color;
-            entry.color = new API.Color()
+            entry.color = new Color()
             {
                 a = values.A,
                 r = values.R,
@@ -1150,7 +1145,7 @@ namespace Zat.Shared.ModMenu.Interactive
 
         public override EntryType Type { get { return EntryType.Color; } }
 
-        public static implicit operator API.Color(InteractiveColorSetting color)
+        public static implicit operator Color(InteractiveColorSetting color)
         {
             return color.Color;
         }
@@ -1162,7 +1157,7 @@ namespace Zat.Shared.ModMenu.Interactive
         }
         public override void Reset()
         {
-            var color = new API.Color()
+            var color = new Color()
             {
                 a = defaultValues.A,
                 r = defaultValues.R,
@@ -1313,7 +1308,7 @@ namespace Zat.Shared.ModMenu.Interactive
         {
             defaultValues = values;
             entry.type = EntryType.Button;
-            entry.button = new API.Button()
+            entry.button = new Button()
             {
                 label = values.Label
             };
@@ -1327,7 +1322,7 @@ namespace Zat.Shared.ModMenu.Interactive
         public override void Reset()
         {
             previousState = ButtonState.Normal;
-            var button = new API.Button()
+            var button = new Button()
             {
                 label = defaultValues.Label
             };
@@ -1466,4 +1461,3 @@ namespace Zat.Shared.ModMenu.Interactive
         }
     }
 }
-

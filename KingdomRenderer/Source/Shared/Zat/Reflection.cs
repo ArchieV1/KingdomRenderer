@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace Zat.Shared.Reflection
+namespace KingdomRenderer.Shared.Zat
 {
     public static class ZatsReflection
     {

@@ -25,6 +25,7 @@ When taking render:
 - Options for where to save renders ❎ (nah)
 - Save renders as .png/.jpeg not .gif
 - ~~While creating a world it renders every frame (With no name and going above settings val)~~ (GameState.inst.CurrMode == GameState.inst.playingMode fixed this)  
+- Could be made faster by moving camera once at Map load though its pretty instant I think.
 
 ###Check settings work:  
 - Enabled  ✅  

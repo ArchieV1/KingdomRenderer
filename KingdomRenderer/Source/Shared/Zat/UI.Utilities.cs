@@ -2,7 +2,7 @@
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
-namespace Zat.Shared.UI.Utilities
+namespace KingdomRenderer.Shared.Zat
 {
     public class DraggableRect : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
     {

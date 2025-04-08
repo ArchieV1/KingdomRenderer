@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Zat.Shared.Rendering
+namespace KingdomRenderer.Shared.Zat
 {
     public static class ZatsRenderer
     {

@@ -1,11 +1,7 @@
-﻿using Assets;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Zat.Shared.Reflection;
+﻿using System.Linq;
+using Assets;
 
-namespace Zat.Shared
+namespace KingdomRenderer.Shared.Zat
 {
     public static class GameUtils
     {
