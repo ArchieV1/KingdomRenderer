@@ -2,7 +2,6 @@ namespace KingdomRenderer
 {
     public enum FileLocation
     {
-        SteamApps = 0,
         /// <summary>
         /// Config on Linux <br/>
         /// Library on Mac

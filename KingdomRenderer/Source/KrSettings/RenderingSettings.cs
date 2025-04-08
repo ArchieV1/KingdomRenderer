@@ -3,7 +3,6 @@ using KingdomRenderer.Shared.Zat;
 
 namespace KingdomRenderer.KrSettings
 {
-    
     [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]
     [SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
     public class RenderingSetting
@@ -29,8 +28,8 @@ namespace KingdomRenderer.KrSettings
         [Select(6, "120", "240", "272", "342", "480", "960", "1080", "2160", "3072", "4320", "8640")]
         public InteractiveSelectSetting ResolutionY { get; private set; }
         
-        [Setting("Render Filetype", "Where do you want your images to be saved?")]
-        [Select(0, nameof(global::KingdomRenderer.FileLocation.SteamApps), nameof(global::KingdomRenderer.FileLocation.AppData), nameof(global::KingdomRenderer.FileLocation.Pictures), nameof(global::KingdomRenderer.FileLocation.Desktop), nameof(global::KingdomRenderer.FileLocation.Documents))]
+        [Setting("Render Directory", "Where do you want your images to be saved?")]
+        [Select(0, nameof(global::KingdomRenderer.FileLocation.AppData), nameof(global::KingdomRenderer.FileLocation.Pictures), nameof(global::KingdomRenderer.FileLocation.Desktop), nameof(global::KingdomRenderer.FileLocation.Documents))]
         public InteractiveSelectSetting FileLocation { get; private set; }
     }
 }

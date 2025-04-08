@@ -46,11 +46,7 @@ namespace KingdomRenderer
 
             LogModSettings();
             
-            // Create all of the /KingdomRenderer/ directories
-            Helper.Log("Creating Render directory in all allowed FileLocations:");
-            CreateInitialRendersDirectories();
-            
-            Helper.Log($"Renders folder now exists at:");
+            Helper.Log($"Renders folder will be created in the following locations as needed:");
             Helper.LogMultiLine(ListAllRendersDirectories(Helper));
             
             
@@ -298,12 +294,14 @@ namespace KingdomRenderer
             Inst.Helper.Log("SaveRender Start");
             try
             {
-                DirectoryExtension.TryCreate(Path.Join(GetCurrentSavePath(), TownNameUI.inst.townName));
+                string townPath = Path.Join(GetCurrentSavePath(), TownNameUI.inst.townName);
+                Inst.Helper.Log($"If needed creating TownPath: {townPath}");
+                DirectoryExtension.TryCreate(townPath);
                 
-                string path = CreateFilePath(Path.Join(TownNameUI.inst.townName, filename + ".png"));
-                Helper.Log($"Saving to: {path}");
+                string filePath = CreateFilePath(Path.Join(TownNameUI.inst.townName, filename + ".png"));
+                Helper.Log($"Saving to: {filePath}");
                 
-                World.inst.SaveTexture(path, texture2D);
+                World.inst.SaveTexture(filePath, texture2D);
             }
             catch (Exception e)
             {
@@ -332,21 +330,6 @@ namespace KingdomRenderer
         private string CreateFilePath(string saveName)
         {
             return Path.Join(GetCurrentSavePath(), saveName);
-        }
-        
-        /// <summary>
-        /// Attempt to create a "Renders" directory at both possible locations
-        /// </summary>
-        /// <returns></returns>
-        private void CreateInitialRendersDirectories()
-        {
-            foreach (FileLocation location in EnumExtension.GetEnumList<FileLocation>())
-            {
-                string savePath = GetSavePath(location);
-                
-                // This does not care if dir already exist so may as well run the entire command
-                DirectoryExtension.TryCreate(savePath);
-            }
         }
         
         private string GetCurrentSavePath(string kingdomName = "")

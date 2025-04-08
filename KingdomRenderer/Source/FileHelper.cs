@@ -14,32 +14,20 @@ namespace KingdomRenderer
         /// <returns></returns>
         public static string GetSavePath(KCModHelper helper, FileLocation location, string kingdomName)
         {
-            string dirName = Path.Join("KingdomRenderer", kingdomName);
+            // This cannot be used by AppData or SteamApps because of permission issues
+            string kingdomRendererPath = Path.Join("KingdomRenderer", kingdomName);
             
-            switch (location)
+            if (location == FileLocation.AppData)
             {
-                case FileLocation.SteamApps:
-                    // Linux
-                    // ~/.steam/steam/steamapps/workshop/content/569480/2306848108
-                    // ~/.local/share/Steam/steamapps/common/Kingdoms and Castles/KingdomsAndCastles_Data/mods/KingdomRenderer
-                    
-                    // Mac
-                    // ???
-                    
-                    // Windows
-                    // $\steamapps\common\Kingdoms and Castles\KingdomsAndCastles_Data\mods\KingdomRenderer\Renders
-                    // $\steamapps\workshop\content\569480\2306848108\
-                    return Path.Join(helper.modPath, dirName);
-                case FileLocation.AppData:
-                    // Linux
-                    // ~/.config/unity3d/LionShield/Kingdoms and Castles/
-                    
-                    // Mac
-                    // ~/Library/Logs/Unity/
-                    
-                    // Windows
-                    // C:\Users\[USERNAME]\AppData\LocalLow\LionShield\Kingdoms and Castles\
-                    return Path.Join(Application.persistentDataPath, dirName);
+                // Linux
+                // ~/.config/unity3d/LionShield/Kingdoms and Castles/
+                
+                // Mac
+                // ~/Library/Logs/Unity/
+                
+                // Windows
+                // C:\Users\[USERNAME]\AppData\LocalLow\LionShield\Kingdoms and Castles\
+                return Path.Join(Application.persistentDataPath);
             }
             
             
@@ -48,11 +36,11 @@ namespace KingdomRenderer
                 switch (location)
                 {
                     case FileLocation.Desktop:
-                        return Path.Join("$HOME/Desktop", dirName);
+                        return Path.Join("$HOME/Desktop", kingdomRendererPath);
                     case FileLocation.Documents:
-                        return Path.Join("$HOME/Documents", dirName);
+                        return Path.Join("$HOME/Documents", kingdomRendererPath);
                     case FileLocation.Pictures:
-                        return Path.Join("$HOME/Pictures", dirName);
+                        return Path.Join("$HOME/Pictures", kingdomRendererPath);
                 }
             }
             
@@ -61,11 +49,11 @@ namespace KingdomRenderer
                 switch (location)
                 {
                     case FileLocation.Desktop:
-                        return Path.Join("%USERPROFILE%/Desktop", dirName);
+                        return Path.Join("%USERPROFILE%/Desktop", kingdomRendererPath);
                     case FileLocation.Documents:
-                        return Path.Join("%USERPROFILE%/Documents", dirName);
+                        return Path.Join("%USERPROFILE%/Documents", kingdomRendererPath);
                     case FileLocation.Pictures:
-                        return Path.Join("%USERPROFILE%/Pictures", dirName);
+                        return Path.Join("%USERPROFILE%/Pictures", kingdomRendererPath);
                 }
             }
 
