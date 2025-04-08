@@ -1,12 +1,9 @@
-using System;
 using System.Diagnostics;
 
 namespace KingdomRenderer.Shared.ArchieV1.Debug.Terminal
 {
     public static class Terminal
     {
-        public const int TrueCode = 42;
-        public const int FalseCode = 43;
         public static readonly bool RunningUnixLike = OS.RunningUnixLike();
 
         /// <summary>
@@ -14,19 +11,21 @@ namespace KingdomRenderer.Shared.ArchieV1.Debug.Terminal
         /// Runs this command on a Unix-Like environment using bash.
         /// </summary>
         /// <param name="test">Must contain quotes where needed</param>
-        /// <param name="success">What code should be used for test succeed.</param>
-        /// <param name="failed">What code should be used for test failed.</param>
         /// <returns></returns>
         /// <example>Test could be: -e "file/path/in/quotes"</example>
-        private static bool TestCommandUnix(string test, int success = TrueCode, int failed = FalseCode)
+        private static bool TestCommandUnix(string test)
         {
             ULogger.ULog($"Running Test: {test}", "System.IO.Terminal");
-            string command = $"[ {test} ] && exit \"{success}\" || exit \"{failed}\"";
+            string command = $"test {test}";
             
             Process process = RunCommandUnix(command);
             process.WaitForExit();
+
+            bool success = process.ExitCode == 0;
             
-            return process.IsTrueCode();
+            ULogger.ULog($"Test succeeded: {success}", "System.IO.Terminal");
+            
+            return success;
         }
 
         /// <summary>
@@ -34,39 +33,38 @@ namespace KingdomRenderer.Shared.ArchieV1.Debug.Terminal
         /// Runs this command on a Windows environment using CMD
         /// </summary>
         /// <param name="test"></param>
-        /// <param name="success"></param>
-        /// <param name="failed"></param>
         /// <returns></returns>
-        private static bool TestCommandWindows(string test, int success = TrueCode, int failed = FalseCode)
+        private static bool TestCommandWindows(string test)
         {
             ULogger.ULog($"Running Test: {test}", "System.IO.Terminal");
-            string command = $"IF \"{test}\" (EXIT /B \"{success}\") ELSE (EXIT /B \"{failed}\"))";
+            string command = $"IF {test}";
             
             Process process = RunCommandWindows(command);
             process.WaitForExit();
             
-            return process.IsTrueCode();
+            bool success = process.ExitCode == 0;
+            
+            ULogger.ULog($"Test succeeded: {success}", "System.IO.Terminal");
+            
+            return success;
         }
 
-        public static bool TestCommand(string test, int success = TrueCode, int failed = FalseCode)
+        public static bool TestCommand(string test)
         {
             if (RunningUnixLike)
             {
-                return TestCommandUnix(test, success, failed);
+                return TestCommandUnix(test);
             }
-            return TestCommandWindows(test, success, failed);
+            return TestCommandWindows(test);
         }
 
-        public static bool TestCommand(string testUnix,
-            string testWindows,
-            int success = TrueCode,
-            int failed = FalseCode)
+        public static bool TestCommand(string testUnix, string testWindows)
         {
             if (RunningUnixLike)
             {
-                return TestCommandUnix(testUnix, success, failed);
+                return TestCommandUnix(testUnix);
             }
-            return TestCommandWindows(testWindows, success, failed);
+            return TestCommandWindows(testWindows);
         }
 
         private static Process RunCommandUnix(string command)
@@ -132,18 +130,6 @@ namespace KingdomRenderer.Shared.ArchieV1.Debug.Terminal
                 return RunCommandUnix(commandBash);
             }
             return RunCommandWindows(commandCmd);
-        }
-
-        public static bool IsTrueCode(this Process process, int successCode = TrueCode)
-        {
-            int processCode = process.ExitCode;
-            ULogger.ULog($"Process Code: {processCode}", "System.IO.Terminal");
-            return processCode == successCode;
-        }
-
-        public static bool IsFalseCode(this Process process, int failedCode = FalseCode)
-        {
-            return process.ExitCode == failedCode;
         }
     }
 }

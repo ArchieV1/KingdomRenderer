@@ -101,7 +101,7 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
                 throw new ArgumentException($"File does not exist at {filePath}");
             }
 
-            if (Directory.Exists(newDirectoryPath))
+            if (!Directory.Exists(newDirectoryPath))
             {
                 throw new ArgumentException($"Directory does not exist at {newDirectoryPath}");
             }
