@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Permissions;
 using System.Text.RegularExpressions;
 using KingdomRenderer.Shared.ArchieV1.Debug;
 
@@ -360,8 +361,23 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
 
         private static string CombineParts(IEnumerable<string> pathParts)
         {
+            ULogger.ULog($"Combining '{string.Join("','", pathParts)}'", "System.IO.Path");
             var separator = OS.GetDirectorySeparator();
-            return string.Join(separator, pathParts);
+            
+            // Remove trailing slashes
+            IEnumerable<string> formattedParts = pathParts
+                .Where(p => p != null)
+                .Select(p =>
+                {
+                    if (p.EndsWith(separator))
+                    {
+                        return p.Substring(0, p.Length - separator.Length);
+                    }
+                    return p;
+                });
+            
+            ULogger.ULog($"Combining '{string.Join("','", formattedParts)}'", "System.IO.Path");
+            return string.Join(separator, formattedParts);
         }
     }
 }

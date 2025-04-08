@@ -29,7 +29,7 @@ namespace KingdomRenderer.KrSettings
         public InteractiveSelectSetting ResolutionY { get; private set; }
         
         [Setting("Render Directory", "Where do you want your images to be saved?")]
-        [Select(0, nameof(global::KingdomRenderer.FileLocation.AppData), nameof(global::KingdomRenderer.FileLocation.Pictures), nameof(global::KingdomRenderer.FileLocation.Desktop), nameof(global::KingdomRenderer.FileLocation.Documents))]
+        [Select(0, nameof(global::KingdomRenderer.FileLocation.SteamApps), nameof(global::KingdomRenderer.FileLocation.AppData), nameof(global::KingdomRenderer.FileLocation.Pictures), nameof(global::KingdomRenderer.FileLocation.Desktop), nameof(global::KingdomRenderer.FileLocation.Documents))]
         public InteractiveSelectSetting FileLocation { get; private set; }
     }
 }

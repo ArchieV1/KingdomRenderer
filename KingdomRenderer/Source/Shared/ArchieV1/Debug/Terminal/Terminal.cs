@@ -13,14 +13,15 @@ namespace KingdomRenderer.Shared.ArchieV1.Debug.Terminal
         /// Runs an IF/ELSE statement on the given test using exist codes to determine true/false.
         /// Runs this command on a Unix-Like environment using bash.
         /// </summary>
-        /// <param name="test"></param>
-        /// <param name="success"></param>
-        /// <param name="failed"></param>
+        /// <param name="test">Must contain quotes where needed</param>
+        /// <param name="success">What code should be used for test succeed.</param>
+        /// <param name="failed">What code should be used for test failed.</param>
         /// <returns></returns>
+        /// <example>Test could be: -e "file/path/in/quotes"</example>
         private static bool TestCommandUnix(string test, int success = TrueCode, int failed = FalseCode)
         {
             ULogger.ULog($"Running Test: {test}", "System.IO.Terminal");
-            string command = $"[ {test} ] && exit {success} || exit {failed}";
+            string command = $"[ {test} ] && exit \"{success}\" || exit \"{failed}\"";
             
             Process process = RunCommandUnix(command);
             process.WaitForExit();
@@ -39,7 +40,7 @@ namespace KingdomRenderer.Shared.ArchieV1.Debug.Terminal
         private static bool TestCommandWindows(string test, int success = TrueCode, int failed = FalseCode)
         {
             ULogger.ULog($"Running Test: {test}", "System.IO.Terminal");
-            string command = $"IF {test} (EXIT /B {success}) ELSE (EXIT /B {failed}))";
+            string command = $"IF \"{test}\" (EXIT /B \"{success}\") ELSE (EXIT /B \"{failed}\"))";
             
             Process process = RunCommandWindows(command);
             process.WaitForExit();
@@ -56,7 +57,9 @@ namespace KingdomRenderer.Shared.ArchieV1.Debug.Terminal
             return TestCommandWindows(test, success, failed);
         }
 
-        public static bool TestCommand(string testUnix, string testWindows, int success = TrueCode,
+        public static bool TestCommand(string testUnix,
+            string testWindows,
+            int success = TrueCode,
             int failed = FalseCode)
         {
             if (RunningUnixLike)
@@ -133,7 +136,9 @@ namespace KingdomRenderer.Shared.ArchieV1.Debug.Terminal
 
         public static bool IsTrueCode(this Process process, int successCode = TrueCode)
         {
-            return process.ExitCode == successCode;
+            int processCode = process.ExitCode;
+            ULogger.ULog($"Process Code: {processCode}", "System.IO.Terminal");
+            return processCode == successCode;
         }
 
         public static bool IsFalseCode(this Process process, int failedCode = FalseCode)

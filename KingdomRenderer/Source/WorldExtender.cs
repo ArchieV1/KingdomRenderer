@@ -14,7 +14,6 @@ namespace KingdomRenderer
             {
                 KingdomRenderer.Inst.Helper.Log("CaptureWorldShot Start");
                 Camera camera = KingdomRenderer.Inst.camera;
-                KingdomRenderer.Inst.Helper.Log($"Cameras: {Camera.allCamerasCount}");
 
                 if (camera == null)
                 {

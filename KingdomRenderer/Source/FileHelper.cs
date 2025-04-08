@@ -14,7 +14,7 @@ namespace KingdomRenderer
         /// <returns></returns>
         public static string GetSavePath(KCModHelper helper, FileLocation location, string kingdomName)
         {
-            // This cannot be used by AppData or SteamApps because of permission issues
+            // This cannot be used by AppData or SteamApps because of permission issues? TODO check this seems unlikely
             string kingdomRendererPath = Path.Join("KingdomRenderer", kingdomName);
             
             if (location == FileLocation.AppData)
@@ -27,7 +27,12 @@ namespace KingdomRenderer
                 
                 // Windows
                 // C:\Users\[USERNAME]\AppData\LocalLow\LionShield\Kingdoms and Castles\
-                return Path.Join(Application.persistentDataPath);
+                return Path.Join(Application.persistentDataPath, kingdomRendererPath);
+            }
+
+            if (location == FileLocation.SteamApps)
+            {
+                return Path.Join(helper.modPath, kingdomRendererPath);
             }
             
             
@@ -66,10 +71,21 @@ namespace KingdomRenderer
             List<string> directories = new List<string>();
             foreach (FileLocation location in Enum.GetValues(typeof(FileLocation)))
             {
+                helper.Log($"Listing loc for file {location}");
                 directories.Add(GetSavePath(helper, location, null));
             }
             
             return directories;
+        }
+
+        /// <summary>
+        /// Returns $/steamapps/common/Kingdoms and Castles/
+        /// Linux: ~/.local/share/Steam/steamapps/common/Kingdoms and Castles/
+        /// </summary>
+        /// <returns></returns>
+        public static string GetKingdomsAndCastlesSteamAppsDirectory()
+        {
+            return PathExtension.GetParentPath(Application.dataPath);
         }
     }
 }

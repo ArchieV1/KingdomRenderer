@@ -36,7 +36,7 @@ namespace KingdomRenderer.Shared.ArchieV1
             }
             else
             {
-                Console.WriteLine("[ULOG|{0}] {1, 25} | {2}", DateTime.Now, categoryString, messageString);
+                Console.WriteLine("[ULOG|{0:o}] {1, 25} | {2}", DateTime.Now, categoryString, messageString);
             }
         }
         

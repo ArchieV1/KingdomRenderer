@@ -118,7 +118,6 @@ namespace KingdomRenderer
         /// Sets up modHelper and patches Harmony
         /// </summary>
         /// <param name="helper">The helper injected by KaC upon compilation</param>
-        // ReSharper disable once ParameterHidesMember
         public void Preload(KCModHelper helper)
         {
             // Set up mod helper
@@ -138,6 +137,7 @@ namespace KingdomRenderer
         public void SceneLoaded(KCModHelper helper)
         {
             helper.Log("Scene Loaded");
+            // TODO can we not access player prefs any more? is that why so many renders?
             helper.Log($"renderPerYear loaded: {PlayerPrefs.HasKey($"rendersDoneThisYear {World.inst.name}")}");
 
             LogModSettings();
@@ -236,10 +236,10 @@ namespace KingdomRenderer
                     _settings.RendSettings.RendHeight.Value),
                     CreateSaveName());
                 Helper.LogInLine("RENDERING DONE");
-                Helper.Log($"Render should be saved as:\n" +
+                Helper.LogMultiLine($"Render should be saved as:\n" +
                            $"{CreateSaveName()}.png\n" +
-                           $"at" +
-                           $"\n{GetCurrentSavePath()}");
+                           $"at\n" +
+                           $"\n{GetCurrentSavePath(TownNameUI.inst.townName)}");
                 
                 // Re-enable the clouds
                 Settings.inst.ShowClouds = _cloudSetting;
@@ -297,11 +297,20 @@ namespace KingdomRenderer
                 string townPath = Path.Join(GetCurrentSavePath(), TownNameUI.inst.townName);
                 Inst.Helper.Log($"If needed creating TownPath: {townPath}");
                 DirectoryExtension.TryCreate(townPath);
+
+                string completeFileName = $"{filename}.png";
                 
-                string filePath = CreateFilePath(Path.Join(TownNameUI.inst.townName, filename + ".png"));
-                Helper.Log($"Saving to: {filePath}");
+                // Always saves to ~/.local/share/Steam/steamapps/common/Kingdoms and Castles/
+                World.inst.SaveTexture(completeFileName, texture2D);
+
+                string currentFilePath = Path.Join(GetKingdomsAndCastlesSteamAppsDirectory(), completeFileName);
+                string targetDirectoryPath = CreateTargetDirectoryPath(TownNameUI.inst.townName);
                 
-                World.inst.SaveTexture(filePath, texture2D);
+                Helper.Log($"Saved to: {currentFilePath}");
+                
+                File.Move(currentFilePath, targetDirectoryPath);
+                
+                Helper.Log($"Moving save to: {targetDirectoryPath}");
             }
             catch (Exception e)
             {
@@ -325,24 +334,24 @@ namespace KingdomRenderer
         /// <summary>
         /// Creates the final file path from the FileLocation and the given saveName
         /// </summary>
-        /// <param name="saveName"></param>
+        /// <param name="kingdomName"></param>
         /// <returns></returns>
-        private string CreateFilePath(string saveName)
+        private string CreateTargetDirectoryPath(string kingdomName)
         {
-            return Path.Join(GetCurrentSavePath(), saveName);
+            return GetCurrentSavePath(kingdomName);
         }
         
         private string GetCurrentSavePath(string kingdomName = "")
         {
-            return FileHelper.GetSavePath(
+            return GetSavePath(
                 Helper,
                 KrSettings.KrSettings.Inst.RendSettings.FileLocation.GetValueEnum<FileLocation>(),
                 kingdomName);
         }
 
-        private string GetSavePath(FileLocation location, string kingdomName = "")
+        private string GetSavePathForLocation(FileLocation location, string kingdomName = "")
         {
-            return FileHelper.GetSavePath(
+            return GetSavePath(
                 Helper,
                 location,
                 kingdomName); 

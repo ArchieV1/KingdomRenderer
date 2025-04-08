@@ -88,8 +88,24 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
             return Move(path, dirPath);
         }
 
+        /// <summary>
+        /// Moves the file at the given <paramref name="filePath"/> to the <paramref name="newDirectoryPath"/>
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="newDirectoryPath">The directory to move the file to</param>
+        /// <returns></returns>
         public static bool Move(string filePath, string newDirectoryPath)
         {
+            if (!Exists(filePath))
+            {
+                throw new ArgumentException($"File does not exist at {filePath}");
+            }
+
+            if (Directory.Exists(newDirectoryPath))
+            {
+                throw new ArgumentException($"Directory does not exist at {newDirectoryPath}");
+            }
+            
             string fileName = Path.GetFileName(filePath);
             string newPath = Path.Combine(newDirectoryPath, fileName);
 
