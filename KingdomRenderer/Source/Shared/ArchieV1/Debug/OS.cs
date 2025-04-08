@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace KingdomRenderer.Shared.ArchieV1.Debug
@@ -50,6 +51,26 @@ namespace KingdomRenderer.Shared.ArchieV1.Debug
         public static char GetDirectorySeparatorChar()
         {
             return RunningWindows() ? WindowsSeparator.ToCharArray()[0] : UnixSeparator.ToCharArray()[0];
+        }
+
+        public static OperatingSystem GetOS()
+        {
+            if (RunningLinux())
+            {
+                return OperatingSystem.Linux;
+            }
+
+            if (RunningMac())
+            {
+                return OperatingSystem.Mac;
+            }
+
+            if (RunningWindows())
+            {
+                return OperatingSystem.Windows;
+            }
+            
+            throw new Exception("Not running Linux, Mac or Windows.");
         }
     }
 }

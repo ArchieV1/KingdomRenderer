@@ -11,7 +11,7 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
     /// This implementation does not include of System.IO's overloads <br />
     /// </summary>
     /// <remarks>WARNING: This does not have any error checking. Make sure your inputs are valid</remarks>
-    public class Path
+    public static class Path
     {
         private static readonly bool RunningUnixLike = OS.RunningUnixLike();
         

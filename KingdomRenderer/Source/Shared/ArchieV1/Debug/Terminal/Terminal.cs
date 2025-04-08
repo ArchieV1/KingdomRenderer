@@ -122,13 +122,13 @@ namespace KingdomRenderer.Shared.ArchieV1.Debug.Terminal
             return RunCommandWindows(command);
         }
 
-        public static Process RunCommand(string commandUnix, string commandWindows)
+        public static Process RunCommand(string commandBash, string commandCmd)
         {
             if (RunningUnixLike)
             {
-                return RunCommandUnix(commandUnix);
+                return RunCommandUnix(commandBash);
             }
-            return RunCommandWindows(commandWindows);
+            return RunCommandWindows(commandCmd);
         }
 
         public static bool IsTrueCode(this Process process, int successCode = TrueCode)

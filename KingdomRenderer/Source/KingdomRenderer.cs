@@ -1,41 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Reflection;
 using Assets;
 using UnityEngine;
 using Harmony;
-using KingdomRenderer.Shared.ArchieV1.Debug;
 using KingdomRenderer.Shared.ArchieV1.Extensions;
 using KingdomRenderer.Shared.Zat;
 using KingdomRenderer.Shared.ArchieV1.Extensions.ModMenuApiExtensions;
 using KingdomRenderer.Shared.ArchieV1.System.IO;
+using static KingdomRenderer.FileHelper;
 
 namespace KingdomRenderer
 {
     public class KingdomRenderer : MonoBehaviour
     {
-        // USER SETTINGS
-        /* 
-         Change these values to change where images will be saved.
-         Change `SavePathAppData` to change which subfolder files saved with the settings "AppData" will be saved (.config/Library on Linux/Mac)
-         Change `SavePathSteamApps` to change which subfolder files save with the settings "SteamApps" will be saved
-         
-         Unfortunately because of how KC works it is not possible to set other file saving destination. 
-         Only directories (Folders) below this these two
-         
-         See `UpdateSavePath()` at the bottom of this file to see where the files will end up on your system!
-         */
-        
-        /// <summary>
-        /// Name of the directory inside of AppData/.config/Library (Win/Linux/Mac)
-        /// </summary>
-        private const string SavePathAppData = "Renders/";
-        // TODO issue is some are expecting with and without the "/" beforehand. Use Path.Join or similar to sort this out
-        /// <summary>
-        /// Name of the directory inside of SteamApps
-        /// </summary>
-        private const string SavePathSteamApps = "Renders/";
-        
         // Instances
         public KCModHelper Helper;
         public static KingdomRenderer Inst;
@@ -51,11 +28,6 @@ namespace KingdomRenderer
         private KrSettings.KrSettings _settings;
         public ModSettingsProxy modSettingsProxy;
         
-        /// <summary>
-        /// Path to save files at. Contains "/Renders/"
-        /// </summary>
-        private string _savePath = "";
-
         public GameObject cameraGameObject;
         public Camera camera;
 
@@ -74,9 +46,12 @@ namespace KingdomRenderer
 
             LogModSettings();
             
-            // For SteamApps the renders folder came with the mod download
-            Helper.Log("Creating Render directory in AppData:");
-            Helper.Log($"Renders folder now exists: {CreateRendersDirectories()}");
+            // Create all of the /KingdomRenderer/ directories
+            Helper.Log("Creating Render directory in all allowed FileLocations:");
+            CreateInitialRendersDirectories();
+            
+            Helper.Log($"Renders folder now exists at:");
+            Helper.LogMultiLine(ListAllRendersDirectories(Helper));
             
             
             ModSettingsBootstrapper.Register(config.ModConfig, (proxy, saved) =>
@@ -179,22 +154,21 @@ namespace KingdomRenderer
         /// </summary>
         public void LogModSettings()
         {
-            Helper.Log("---CURRENT SETTINGS---");
+            Helper.LogInLine("CURRENT SETTINGS");
             try
             {
                 Helper.Log($"Enabled: {_settings.RendSettings.Enabled.Value}");
                 Helper.Log($"Rendering height: {_settings.RendSettings.RendHeight.Value}");
                 Helper.Log($"Rendering res X: {_renderWidth}");
                 Helper.Log($"Rendering res Y: {_renderHeight}");
-                Helper.Log("");
+                Helper.Log();
                 Helper.Log($"Auto enabled: {_settings.AutoRend.Enabled.Value}");
                 Helper.Log($"Auto interval (Per 10 years): {_settings.AutoRend.RendPer10Year.Value}");
-                Helper.Log("");
+                Helper.Log();
                 Helper.Log($"Manual enabled: {_settings.ManRend.Enabled.Value}");
                 Helper.Log($"Manual key: {_settings.ManRend.RenderKey.Key}");
-                Helper.Log("");
-                Helper.Log($"Filetype val: {_settings.RendSettings.FileType.Options[_settings.RendSettings.FileType.Value]}");
-                Helper.Log($"Filetype: {GetFileExtension()}");
+                Helper.Log();
+                Helper.Log($"FileLocation: {_settings.RendSettings.FileLocation.GetValue()}");
             }
             catch (Exception)
             {
@@ -212,11 +186,11 @@ namespace KingdomRenderer
         public void Update()
         {
             // If enabled and not on the menu/world creation screen
-            if (!_settings.RendSettings.Enabled.Value) return;
+            if (!_settings.RendSettings.Enabled.GetValue()) return;
             
             // Manual _rendering
             if (Input.GetKeyDown(_settings.ManRend.RenderKey.Key)
-                && _settings.ManRend.Enabled.Value
+                && _settings.ManRend.Enabled.GetValue()
                 && GameState.inst.CurrMode == GameState.inst.playingMode)
             {
                 Helper.Log("Manual render");
@@ -257,7 +231,7 @@ namespace KingdomRenderer
             {
                 _shouldRender = false;
                 Helper.Log($"Rendering picture at time {Weather.inst.GetYearProgress()} in year: {Player.inst.CurrYear}");
-                Helper.Log("----Rendering NOW----");
+                Helper.LogInLine("Rendering NOW");
                         
                 SaveRender(
                     RenderWorld(
@@ -265,11 +239,11 @@ namespace KingdomRenderer
                         int.Parse(_settings.RendSettings.ResolutionY.GetValue()),
                     _settings.RendSettings.RendHeight.Value),
                     CreateSaveName());
-                Helper.Log("----RENDERING DONE----");
+                Helper.LogInLine("RENDERING DONE");
                 Helper.Log($"Render should be saved as:\n" +
-                           $"{CreateSaveName()}.{GetFileExtension()}\n" +
+                           $"{CreateSaveName()}.png\n" +
                            $"at" +
-                           $"\n{_savePath}");
+                           $"\n{GetCurrentSavePath()}");
                 
                 // Re-enable the clouds
                 Settings.inst.ShowClouds = _cloudSetting;
@@ -294,7 +268,7 @@ namespace KingdomRenderer
         
         private int GetWhichRenderThisYear()
         {
-            float rendersPerYear = _settings.AutoRend.RendPer10Year.Value / 10;
+            float rendersPerYear = _settings.AutoRend.RendPer10Year.GetValue() / 10;
             return (int) Math.Round(Weather.inst.GetYearProgress() * rendersPerYear);
         }
         
@@ -307,9 +281,9 @@ namespace KingdomRenderer
         /// <returns>Render of the entire world</returns>
         private Texture2D RenderWorld(int width, int height, float renderHeightLocal)
         {
-            Helper.Log("RenderWorld Start");
+            Helper.Log($"RenderWorld Start at {DateTime.UtcNow}");
             Texture2D result = WorldExtender.KingdomRenderer_CaptureWorldShot(width, height, renderHeightLocal);
-            Helper.Log("RenderWorld End");
+            Helper.Log($"RenderWorld End at {DateTime.UtcNow}");
             return result;
         }
 
@@ -324,16 +298,12 @@ namespace KingdomRenderer
             Inst.Helper.Log("SaveRender Start");
             try
             {
-                if (_settings.RendSettings.FileType.Value == 0 ||
-                    _settings.RendSettings.FileType.Value == 1) // png (SteamApps) || png (AppData)
-                {
-                    UpdateSavePath();
-                    
-                    string path = CreateFilePath(filename) + ".png";
-                    Helper.Log($"Saving as .png to: {path}");
-                    
-                    World.inst.SaveTexture(path, texture2D);
-                }
+                DirectoryExtension.TryCreate(Path.Join(GetCurrentSavePath(), TownNameUI.inst.townName));
+                
+                string path = CreateFilePath(Path.Join(TownNameUI.inst.townName, filename + ".png"));
+                Helper.Log($"Saving to: {path}");
+                
+                World.inst.SaveTexture(path, texture2D);
             }
             catch (Exception e)
             {
@@ -354,124 +324,45 @@ namespace KingdomRenderer
             return $"{TownNameUI.inst.townName}-{Player.inst.CurrYear}-{renderType}-{DateTime.Now.Second}-{DateTime.Now.Millisecond}";
         }
 
+        /// <summary>
+        /// Creates the final file path from the FileLocation and the given saveName
+        /// </summary>
+        /// <param name="saveName"></param>
+        /// <returns></returns>
         private string CreateFilePath(string saveName)
         {
-            return _savePath + saveName;
-        }
-
-        private string GetFileExtension()
-        {
-            return _settings.RendSettings.FileType.GetValue().Split('(')[0].Trim();
+            return Path.Join(GetCurrentSavePath(), saveName);
         }
         
         /// <summary>
         /// Attempt to create a "Renders" directory at both possible locations
         /// </summary>
         /// <returns></returns>
-        private bool CreateRendersDirectories()
+        private void CreateInitialRendersDirectories()
         {
-            try
+            foreach (FileLocation location in EnumExtension.GetEnumList<FileLocation>())
             {
-                // STEAM APPS
-                // This should come with the mod download but the user may have deleted it
+                string savePath = GetSavePath(location);
                 
-                // APPDATA / .local / Library
-                // TODO why is this "/" not /renders/
-                var paths = new List<(string, string)>
-                {
-                    (Helper.modPath, SavePathSteamApps),
-                    (Application.persistentDataPath, SavePathAppData)
-                };
-                
-                int successCounter = 0;
-                foreach (var targetPath in paths)
-                {
-                    if (Directory.Exists(targetPath.Item1 + targetPath.Item2))
-                    {
-                        Helper.Log($"Directory already exists at {targetPath}");
-                    }
-                    else
-                    {
-                        string result = Directory.TryCreate(targetPath.Item1, targetPath.Item2);
-                        if (!string.IsNullOrEmpty(result))
-                        {
-                            Helper.Log($"Created Directory at: {result}");
-                            successCounter++;
-                        }
-                        else
-                        {
-                            Helper.Log($"Failed to create Directory at: {targetPath}");
-                        }
-                    }
-                }
-                
-                return successCounter == paths.Count;
-            }
-            catch (Exception e)
-            {
-                Helper.Log(e.ToString());
-                return false;
+                // This does not care if dir already exist so may as well run the entire command
+                DirectoryExtension.TryCreate(savePath);
             }
         }
-
-        /// <summary>
-        /// Updates _savePath to make sure it is correct for the current settings and OS
-        /// </summary>
-        /// <returns></returns>
-        private string UpdateSavePath()
+        
+        private string GetCurrentSavePath(string kingdomName = "")
         {
-            string location = KrSettings.KrSettings.Inst.RendSettings.FileType.GetValue();
-            
-            if (OS.RunningLinux())
-            {
-                switch (location)
-                {
-                    case Constants.PngSteamApps:
-                        // ~/.steam/steam/steamapps/workshop/content/569480/2306848108
-                        // ~/.local/share/Steam/steamapps/common/Kingdoms and Castles/KingdomsAndCastles_Data/mods/KingdomRenderer
-                        _savePath = Helper.modPath + SavePathSteamApps;
-                        break;
-                    case Constants.PngAppData:
-                        // ~/.config/unity3d/LionShield/Kingdoms and Castles/
-                        _savePath = Application.persistentDataPath + SavePathAppData;
-                        break;
-                }
-            }
+            return FileHelper.GetSavePath(
+                Helper,
+                KrSettings.KrSettings.Inst.RendSettings.FileLocation.GetValueEnum<FileLocation>(),
+                kingdomName);
+        }
 
-            if (OS.RunningMac())
-            {
-                switch (location)
-                {
-                    case Constants.PngSteamApps:
-                        // Mac:TODO look this up
-                        // No idea?
-                        // Disable if on MacOS
-                        _savePath = Helper.modPath + SavePathSteamApps;
-                        break;
-                    case Constants.PngAppData:
-                        // ~/Library/Logs/Unity/
-                        _savePath = Application.persistentDataPath + SavePathAppData;
-                        break;
-                }
-            }
-            
-            // If cannot determine OS assume Windows
-            switch (location)
-            {
-                case Constants.PngSteamApps:
-                    // $\steamapps\common\Kingdoms and Castles\KingdomsAndCastles_Data\mods\KingdomRenderer\Renders
-                    // $\steamapps\workshop\content\569480\2306848108\
-                    _savePath = Helper.modPath + SavePathSteamApps;
-                    break;
-                case Constants.PngAppData:
-                    // C:\Users\USERNAME\AppData\LocalLow\LionShield\Kingdoms and Castles\
-                    _savePath = Application.persistentDataPath + SavePathAppData;
-                    break;
-                default:
-                    return "";
-            }
-
-            return _savePath;
+        private string GetSavePath(FileLocation location, string kingdomName = "")
+        {
+            return FileHelper.GetSavePath(
+                Helper,
+                location,
+                kingdomName); 
         }
     }
 }

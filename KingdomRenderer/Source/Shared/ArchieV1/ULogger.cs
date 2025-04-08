@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using KingdomRenderer.Shared.ArchieV1.Debug;
 
 namespace KingdomRenderer.Shared.ArchieV1
@@ -46,6 +47,15 @@ namespace KingdomRenderer.Shared.ArchieV1
         public static void ULog(object message)
         {
             ULog(message.ToString(), NameSpace);
+        }
+
+        public static void ULogMultiLine(IEnumerable<object> messages, object category)
+        {
+            string categoryString = FormatCategory(category);
+            foreach (var message in messages)
+            {
+                ULog(message.ToString(), categoryString);
+            }
         }
 
         /// <summary>

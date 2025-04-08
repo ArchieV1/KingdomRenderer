@@ -22,15 +22,15 @@ namespace KingdomRenderer.KrSettings
         public InteractiveSliderSetting ResScaling { get; private set; }
 
         [Setting("Render Resolution X", "Larger resolutions will cause the rendering process to take longer")]
-        [Select(6,  new []{"160", "320", "480", "512", "720", "1280", "1920", "3840", "4096", "7680", "15360"})]
+        [Select(6, "160", "320", "480", "512", "720", "1280", "1920", "3840", "4096", "7680", "15360")]
         public InteractiveSelectSetting ResolutionX { get; private set; }
         
         [Setting("Render Resolution Y", "Larger resolutions will cause the rendering process to take longer")]
-        [Select(6,  new []{"120", "240", "272", "342", "480", "960", "1080", "2160", "3072", "4320", "8640"})]
+        [Select(6, "120", "240", "272", "342", "480", "960", "1080", "2160", "3072", "4320", "8640")]
         public InteractiveSelectSetting ResolutionY { get; private set; }
         
-        [Setting("Render Filetype", "Which image type do you want images to be saved as? And where?")]
-        [Select(0,  new []{Constants.PngSteamApps, Constants.PngAppData})]
-        public InteractiveSelectSetting FileType { get; private set; }
+        [Setting("Render Filetype", "Where do you want your images to be saved?")]
+        [Select(0, nameof(global::KingdomRenderer.FileLocation.SteamApps), nameof(global::KingdomRenderer.FileLocation.AppData), nameof(global::KingdomRenderer.FileLocation.Pictures), nameof(global::KingdomRenderer.FileLocation.Desktop), nameof(global::KingdomRenderer.FileLocation.Documents))]
+        public InteractiveSelectSetting FileLocation { get; private set; }
     }
 }

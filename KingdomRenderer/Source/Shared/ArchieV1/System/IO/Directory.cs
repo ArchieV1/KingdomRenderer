@@ -18,7 +18,7 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
         public static string TryCreate(string path, string directoryName)
         {
             ULogger.ULog($"Creating Directory at: {path}/{directoryName}", "System.IO.Directory");
-            string command = $"cd {path} && mkdir {directoryName}";
+            string command = $"cd \"{path}\" && mkdir \"{directoryName}\"";
             
             Process process = Terminal.RunCommand(command);
             process.WaitForExit();
