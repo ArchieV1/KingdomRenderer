@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Security.AccessControl;
 using KingdomRenderer.Shared.ArchieV1.Debug.Terminal;
 
 namespace KingdomRenderer.Shared.ArchieV1.System.IO
@@ -9,6 +10,8 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
     /// </summary>
     public static class File
     {
+        private const string Category = "System.IO.File";
+        
         /// <summary>
         /// Creates a file at the given location with no contents.
         /// </summary>
@@ -16,13 +19,13 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
         /// <returns>True if file creation succeeded</returns>
         public static bool Create(string path)
         {
-            ULogger.ULog($"Creating File: {path}", "System.IO.File");
+            ULogger.ULog($"Creating File: {path}", Category);
             Process process = Terminal.RunCommand($"touch \"{path}\"", $"type NUL > \"{path}\"");
             process.WaitForExit();
-
+            
             return process.ExitCode == 0;
         }
-
+        
         /// <summary>
         /// Reads the file at the given location.
         /// </summary>
@@ -90,12 +93,14 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
 
         /// <summary>
         /// Moves the file at the given <paramref name="filePath"/> to the <paramref name="newDirectoryPath"/>
+        /// Make sure that the process has the correct permission for both filePath and newDirectoryPath before running
         /// </summary>
         /// <param name="filePath"></param>
         /// <param name="newDirectoryPath">The directory to move the file to</param>
         /// <returns></returns>
         public static bool Move(string filePath, string newDirectoryPath)
         {
+            ULogger.ULog($"Moving File: '{filePath}' to '{newDirectoryPath}'", Category);
             if (!Exists(filePath))
             {
                 throw new ArgumentException($"File does not exist at {filePath}");
@@ -108,9 +113,14 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
             
             string fileName = Path.GetFileName(filePath);
             string newPath = Path.Combine(newDirectoryPath, fileName);
-
+            
             Process process = Terminal.RunCommand($"mv \"{filePath}\" \"{newPath}\"", $"MOVE \"{filePath}\" \"{newPath}\"");
             process.WaitForExit();
+            
+            bool success = process.ExitCode == 0;
+            
+            ULogger.ULog($"Finished moving file with exist code: {process.ExitCode}", Category);
+            // TODO exit code 1 doesnt seem to have specific meaning. Maybe permission issue
             return process.ExitCode == 0;
         }
 

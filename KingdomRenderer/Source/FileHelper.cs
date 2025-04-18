@@ -27,7 +27,9 @@ namespace KingdomRenderer
                 
                 // Windows
                 // C:\Users\[USERNAME]\AppData\LocalLow\LionShield\Kingdoms and Castles\
-                return Path.Join(Application.persistentDataPath, kingdomRendererPath);
+                
+                // Just save to the root of the path
+                return Path.Join(Application.persistentDataPath, "");
             }
 
             if (location == FileLocation.SteamApps)
@@ -79,13 +81,13 @@ namespace KingdomRenderer
         }
 
         /// <summary>
-        /// Returns $/steamapps/common/Kingdoms and Castles/
+        /// Returns $/steamapps/common/Kingdoms and Castles/ <br/>
         /// Linux: ~/.local/share/Steam/steamapps/common/Kingdoms and Castles/
         /// </summary>
         /// <returns></returns>
         public static string GetKingdomsAndCastlesSteamAppsDirectory()
         {
-            return PathExtension.GetParentPath(Application.dataPath);
+            return Path2.GetParentPath(Application.dataPath);
         }
     }
 }

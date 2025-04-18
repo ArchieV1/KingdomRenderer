@@ -36,7 +36,8 @@ namespace KingdomRenderer.Shared.ArchieV1
             }
             else
             {
-                Console.WriteLine("[ULOG|{0:o}] {1, 25} | {2}", DateTime.Now, categoryString, messageString);
+                string dateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                Console.WriteLine("[ULOG|{0}] {1, -25} | {2}", dateTime, categoryString, messageString);
             }
         }
         
@@ -134,7 +135,12 @@ namespace KingdomRenderer.Shared.ArchieV1
             {
                 categoryString = NameSpace;
             }
-            
+
+            if (categoryString.Length > 25)
+            {
+                // Select the last 25 chars of the category instead of first 25
+                categoryString = categoryString.Substring(categoryString.Length - 25, 25);
+            }
             return categoryString;
         }
     }

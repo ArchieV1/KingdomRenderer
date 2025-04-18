@@ -15,6 +15,7 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
     public static class Path
     {
         private static readonly bool RunningUnixLike = OS.RunningUnixLike();
+        private const string Category = "System.IO.Path";
         
         /// <summary>
         /// Changes the extension of the given file to the newExtension. 
@@ -361,7 +362,7 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
 
         private static string CombineParts(IEnumerable<string> pathParts)
         {
-            ULogger.ULog($"Combining '{string.Join("','", pathParts)}'", "System.IO.Path");
+            ULogger.ULog($"Combining '{string.Join("','", pathParts)}'", Category);
             var separator = OS.GetDirectorySeparator();
             
             // Remove trailing slashes

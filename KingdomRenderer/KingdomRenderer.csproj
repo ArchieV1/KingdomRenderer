@@ -480,11 +480,12 @@
     <Compile Include="Source\Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResourceType.cs" />
     <Compile Include="Source\Shared\ArchieV1\Maths\ArrayTools.cs" />
     <Compile Include="Source\Shared\ArchieV1\PrivateFieldTools.cs" />
-    <Compile Include="Source\Shared\ArchieV1\System\IO\DirectoryExtension.cs" />
+    <Compile Include="Source\Shared\ArchieV1\System\IO\Directory2.cs" />
     <Compile Include="Source\Shared\ArchieV1\System\IO\Directory.cs" />
     <Compile Include="Source\Shared\ArchieV1\System\IO\File.cs" />
+    <Compile Include="Source\Shared\ArchieV1\System\IO\File2.cs" />
     <Compile Include="Source\Shared\ArchieV1\System\IO\Path.cs" />
-    <Compile Include="Source\Shared\ArchieV1\System\IO\PathExtension.cs" />
+    <Compile Include="Source\Shared\ArchieV1\System\IO\Path2.cs" />
     <Compile Include="Source\Shared\ArchieV1\ULogger.cs" />
     <Compile Include="Source\Shared\Zat\AssetLoading.cs" />
     <Compile Include="Source\Shared\Zat\Debugging.cs" />

@@ -84,7 +84,7 @@ namespace KingdomRenderer.Shared.ArchieV1.Debug.Terminal
             };
             
             process.Start();
-                
+
             return process;
         }
 
@@ -123,12 +123,21 @@ namespace KingdomRenderer.Shared.ArchieV1.Debug.Terminal
             return RunCommandWindows(command);
         }
 
+        /// <summary>
+        /// Runs a command on the current system's terminal
+        /// NOTE: Windows uses CMD not Powershell
+        /// NOTE: UnixLike use Bash
+        /// </summary>
+        /// <param name="commandBash">The command to run in bash</param>
+        /// <param name="commandCmd">The command to run in bash</param>
+        /// <returns></returns>
         public static Process RunCommand(string commandBash, string commandCmd)
         {
             if (RunningUnixLike)
             {
                 return RunCommandUnix(commandBash);
             }
+            
             return RunCommandWindows(commandCmd);
         }
     }

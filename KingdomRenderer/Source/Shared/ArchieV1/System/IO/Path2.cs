@@ -6,8 +6,10 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
     /// <summary>
     /// Extension methods for <see cref="Path"/>
     /// </summary>
-    public static class PathExtension
+    public static class Path2
     {
+        private const string Category = "System.IO.Path2";
+        
         /// <summary>
         /// Replaces Windows specific path separators with generic path separators.
         /// </summary>

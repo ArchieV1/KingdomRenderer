@@ -9,6 +9,8 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
     /// </summary>
     public static class Directory
     {
+        private const string Category = "System.IO.Directory";
+
         /// <summary>
         /// Creates folder at specified path
         /// </summary>
@@ -17,7 +19,7 @@ namespace KingdomRenderer.Shared.ArchieV1.System.IO
         /// <returns>The path of the new folder</returns>
         public static string TryCreate(string path, string directoryName)
         {
-            ULogger.ULog($"Creating Directory at: {path}/{directoryName}", "System.IO.Directory");
+            ULogger.ULog($"Creating Directory at: {path}/{directoryName}", Category);
             string command = $"cd \"{path}\" && mkdir \"{directoryName}\"";
             
             Process process = Terminal.RunCommand(command);

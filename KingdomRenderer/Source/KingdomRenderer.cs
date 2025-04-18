@@ -294,23 +294,35 @@ namespace KingdomRenderer
             Inst.Helper.Log("SaveRender Start");
             try
             {
-                string townPath = Path.Join(GetCurrentSavePath(), TownNameUI.inst.townName);
-                Inst.Helper.Log($"If needed creating TownPath: {townPath}");
-                DirectoryExtension.TryCreate(townPath);
+                // TODO make other save locations work
+                // string townPath = Path.Join(GetCurrentSavePath(), TownNameUI.inst.townName);
+                // Inst.Helper.Log($"If needed creating TownPath: {townPath}");
+                // Directory2.TryCreate(townPath);
+                // Directory2.SetReadWritePermissions(townPath);
 
                 string completeFileName = $"{filename}.png";
                 
-                // Always saves to ~/.local/share/Steam/steamapps/common/Kingdoms and Castles/
+                // Always saves to $HOME/.local/share/Steam/steamapps/common/Kingdoms and Castles/
                 World.inst.SaveTexture(completeFileName, texture2D);
 
                 string currentFilePath = Path.Join(GetKingdomsAndCastlesSteamAppsDirectory(), completeFileName);
-                string targetDirectoryPath = CreateTargetDirectoryPath(TownNameUI.inst.townName);
+                // string targetDirectoryPath = CreateTargetDirectoryPath(TownNameUI.inst.townName);
+                //
+                // File2.SetReadWritePermissions(currentFilePath);
+                // Directory2.SetReadWritePermissions(targetDirectoryPath);
                 
                 Helper.Log($"Saved to: {currentFilePath}");
                 
-                File.Move(currentFilePath, targetDirectoryPath);
-                
-                Helper.Log($"Moving save to: {targetDirectoryPath}");
+                // bool moveWorked = File.Move(currentFilePath, targetDirectoryPath);
+                //
+                // if (moveWorked)
+                // {
+                //     Helper.Log($"Moved render to: {targetDirectoryPath}");
+                // }
+                // else
+                // {
+                //     Helper.Log($"Failed to move render to: {targetDirectoryPath}");
+                // }
             }
             catch (Exception e)
             {
