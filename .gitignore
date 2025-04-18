@@ -1,12 +1,7 @@
 # Manually added
-/V1.1/
-/V1.2/
-/V1.2.1/
-/V1.3/
+/Releases/
 /packages/
 TODO.md
-/.idea/
-/.git/
 
 /KingdomRenderer/bin
 /KingdomRenderer/obj
